@@ -1,6 +1,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define PREVENT_ZERO 1e-44f
 
@@ -14,12 +15,12 @@ typedef struct camera {
 int W = 800;
 int H = 800;
 
-int changeSpeed = 0;
+int changeSpeed = 1;
 float arrow_sens_rev = 20.0f;
 float sensitivity = 1.5f;
 float speed = 0.05f;
 
-int max_ray_length = 100;
+int max_ray_length = 50;
 float ray_process_unit = 1.0f;
 
 camera *InitCamera() {
@@ -54,10 +55,12 @@ int main(int argc, char *argv[]) {
   SetTargetFPS(60);
   camera *cam = InitCamera();
 
+  SetTraceLogLevel(LOG_WARNING);
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(W, H, "Fractal.");
 
   Shader shader = LoadShader(0, "gpu.frag");
+  RenderTexture2D rt = LoadRenderTexture(1, 1);
 
   int cam_pos_loc = GetShaderLocation(shader, "cam_pos");
   int cam_forward_loc = GetShaderLocation(shader, "cam_forward");
@@ -65,6 +68,7 @@ int main(int argc, char *argv[]) {
   int cam_up_loc = GetShaderLocation(shader, "cam_up");
   int max_ray_length_loc = GetShaderLocation(shader, "max_ray_length");
   int resolution_loc = GetShaderLocation(shader, "resolution");
+  int mode_loc = GetShaderLocation(shader, "mode");
 
   DisableCursor();
   while (!WindowShouldClose()) {
@@ -74,12 +78,28 @@ int main(int argc, char *argv[]) {
     Vector2 mdelta = GetMouseDelta();
     rotateCamera(cam, mdelta);
 
-    Vector3 case_forward = Vector3Scale(
-        cam->forward,
-        speed * (changeSpeed ? (Vector3Length(cam->pos) + PREVENT_ZERO) : 1));
-    Vector3 case_right = Vector3Scale(
-        cam->right,
-        speed * (changeSpeed ? (Vector3Length(cam->pos) + PREVENT_ZERO) : 1));
+    int mode = 0;
+    SetShaderValue(shader, mode_loc, &mode, SHADER_UNIFORM_INT);
+    SetShaderValue(shader, cam_pos_loc, &(cam->pos), SHADER_UNIFORM_VEC3);
+    BeginTextureMode(rt);
+    BeginShaderMode(shader);
+    DrawRectangle(0, 0, 1, 1, WHITE);
+    EndShaderMode();
+    EndTextureMode();
+    Image image = LoadImageFromTexture(rt.texture);
+    Color *colors = LoadImageColors(image);
+    unsigned int raw =
+        (unsigned int)(colors->r) << 24 | (unsigned int)(colors->g) << 16 |
+        (unsigned int)(colors->b) << 8 | (unsigned int)(colors->a);
+    float dist;
+    memcpy(&dist, &raw, sizeof(float));
+
+    Vector3 case_forward =
+        Vector3Scale(cam->forward, speed * (changeSpeed ? dist : 1));
+    Vector3 case_right =
+        Vector3Scale(cam->right, speed * (changeSpeed ? dist : 1));
+    UnloadImage(image);
+    UnloadImageColors(colors);
     if (IsKeyDown(KEY_W)) {
       cam->pos = Vector3Add(cam->pos, case_forward);
     }
@@ -107,6 +127,7 @@ int main(int argc, char *argv[]) {
 
     ClearBackground(WHITE);
 
+    mode = 1;
     Vector2 resolution = {(float)W, (float)H};
     SetShaderValue(shader, cam_pos_loc, &cam->pos, SHADER_UNIFORM_VEC3);
     SetShaderValue(shader, cam_forward_loc, &cam->forward, SHADER_UNIFORM_VEC3);
@@ -115,6 +136,7 @@ int main(int argc, char *argv[]) {
     SetShaderValue(shader, max_ray_length_loc, &max_ray_length,
                    SHADER_UNIFORM_INT);
     SetShaderValue(shader, resolution_loc, &resolution, SHADER_UNIFORM_VEC2);
+    SetShaderValue(shader, mode_loc, &mode, SHADER_UNIFORM_INT);
 
     BeginShaderMode(shader);
 

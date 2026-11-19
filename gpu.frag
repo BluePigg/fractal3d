@@ -12,6 +12,8 @@ out vec4 finalColor;
 
 uniform vec2 resolution;
 
+uniform int mode;
+
 uniform vec3 cam_pos;
 uniform vec3 cam_forward;
 uniform vec3 cam_right;
@@ -19,37 +21,55 @@ uniform vec3 cam_up;
 
 uniform int max_ray_length;
 
+vec4 COLOR_HIT = vec4(0.0f,0.5f,0.5f,1.0f);
+vec4 COLOR_MISS = vec4(1.0f,1.0f,1.0f,1.0f);
 
 void process_ray(inout Ray ray, float process_unit) {
   ray.pos += ray.direction*process_unit;
   ray.len++;
 }
 
-void checkboard(Ray ray) {
-  bool black = false;
-  while (ray.pos.y>error_range) {
-    if (ray.len>=max_ray_length) {
-      break;
-    }
-    process_ray(ray,ray.pos.y);
-  }
-  bool hit = ray.len<max_ray_length;
-  if (hit) {
-    black = int(floor(ray.pos.x)+floor(ray.pos.z))%2 == 0;
-  }
+// void checkboard(Ray ray) {
+//   bool black = false;
+//   while (ray.pos.y>error_range) {
+//     if (ray.len>=max_ray_length) {
+//       break;
+//     }
+//     process_ray(ray,ray.pos.y);
+//   }
+//   bool hit = ray.len<max_ray_length;
+//   if (hit) {
+//     black = int(floor(ray.pos.x)+floor(ray.pos.z))%2 == 0;
+//   }
+//
+//   finalColor = hit ? (black ? vec4(0.0f,0.0f,0.0f,1.0f) : vec4(0.0f,0.0f,0.5f,1.0f)) : finalColor;
+// }
+//
+// void sphere(Ray ray) {
+//   while (length(ray.pos)-1.0f>error_range) {
+//     if (ray.len>=max_ray_length) {
+//       break;
+//     }
+//     process_ray(ray,length(ray.pos)-1.0f);
+//   }
+//   bool hit = ray.len<max_ray_length;
+//   finalColor = hit ? vec4(1.0f,0.0f,0.0f,1.0f) : finalColor;
+// }
 
-  finalColor = hit ? (black ? vec4(0.0f,0.0f,0.0f,1.0f) : vec4(0.0f,0.0f,0.5f,1.0f)) : finalColor;
+float distance_function_template(vec3 pos) {
+  return length(pos) - 1.0f;
 }
 
-void sphere(Ray ray) {
-  while (length(ray.pos)-1.0f>error_range) {
-    if (ray.len>=max_ray_length) {
-      break;
-    }
-    process_ray(ray,length(ray.pos)-1.0f);
+void template_(Ray ray) {
+  while ( distance_function_template(ray.pos) > error_range) {
+      if (ray.len>=max_ray_length) {
+        break;
+      }
+      process_ray(ray,distance_function_template(ray.pos));
   }
   bool hit = ray.len<max_ray_length;
-  finalColor = hit ? vec4(1.0f,0.0f,0.0f,1.0f) : finalColor;
+  if (ray.len<=0) ray.len = 1;
+  finalColor = hit ? (COLOR_HIT/ray.len) : (COLOR_MISS);
 }
 
 void main() {
@@ -61,5 +81,15 @@ void main() {
 
   finalColor = vec4(1.0f,1.0f,1.0f,1.0f);
 
-  checkboard(ray);
+  if (mode==0) {
+    float d = distance_function_template(cam_pos);
+    uint bits = floatBitsToUint(d);
+    float r = float((bits >> 24) & 255u) / 255.0;
+    float g = float((bits >> 16) & 255u) / 255.0;
+    float b = float((bits >> 8) & 255u) / 255.0;
+    float a = float(bits & 255u) / 255.0;
+    finalColor = vec4(r,g,b,a);
+  } else {
+    template_(ray);
+  }
 }
