@@ -56,8 +56,12 @@ void process_ray(inout Ray ray, float process_unit) {
 //   finalColor = hit ? vec4(1.0f,0.0f,0.0f,1.0f) : finalColor;
 // }
 
-float distance_function_template(vec3 pos) {
+float distance_function_template_(vec3 pos) {
   return length(pos) - 1.0f;
+}
+
+float distance_function_template(vec3 pos) {
+  return max(abs(pos.x),abs(pos.z))-2;
 }
 
 void template_(Ray ray) {
@@ -69,7 +73,8 @@ void template_(Ray ray) {
   }
   bool hit = ray.len<max_ray_length;
   if (ray.len<=0) ray.len = 1;
-  finalColor = hit ? (COLOR_HIT/ray.len) : (COLOR_MISS);
+  vec3 hitcolor = COLOR_HIT.xyz/(1.0 + ray.len*0.05);
+  finalColor = hit ? vec4(hitcolor.x,hitcolor.y,hitcolor.z,1.0) : (COLOR_MISS);
 }
 
 void main() {

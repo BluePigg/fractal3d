@@ -1,9 +1,8 @@
 #include <raylib.h>
 #include <raymath.h>
+#include <rlgl.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define PREVENT_ZERO 1e-44f
 
 typedef struct camera {
   Vector3 pos;
@@ -19,9 +18,12 @@ int changeSpeed = 1;
 float arrow_sens_rev = 20.0f;
 float sensitivity = 1.5f;
 float speed = 0.05f;
+float min_dist = 0.1f;
 
-int max_ray_length = 50;
+int max_ray_length = 100;
 float ray_process_unit = 1.0f;
+
+float maxf(float a, float b) { return (a > b) ? a : b; }
 
 camera *InitCamera() {
   camera *cam = (camera *)malloc(sizeof(camera));
@@ -79,6 +81,7 @@ int main(int argc, char *argv[]) {
     rotateCamera(cam, mdelta);
 
     int mode = 0;
+    rlDisableColorBlend();
     SetShaderValue(shader, mode_loc, &mode, SHADER_UNIFORM_INT);
     SetShaderValue(shader, cam_pos_loc, &(cam->pos), SHADER_UNIFORM_VEC3);
     BeginTextureMode(rt);
@@ -93,11 +96,12 @@ int main(int argc, char *argv[]) {
         (unsigned int)(colors->b) << 8 | (unsigned int)(colors->a);
     float dist;
     memcpy(&dist, &raw, sizeof(float));
+    rlEnableColorBlend();
 
-    Vector3 case_forward =
-        Vector3Scale(cam->forward, speed * (changeSpeed ? dist : 1));
-    Vector3 case_right =
-        Vector3Scale(cam->right, speed * (changeSpeed ? dist : 1));
+    Vector3 case_forward = Vector3Scale(
+        cam->forward, speed * (changeSpeed ? maxf(dist, min_dist) : 1));
+    Vector3 case_right = Vector3Scale(
+        cam->right, speed * (changeSpeed ? maxf(dist, min_dist) : 1));
     UnloadImage(image);
     UnloadImageColors(colors);
     if (IsKeyDown(KEY_W)) {
