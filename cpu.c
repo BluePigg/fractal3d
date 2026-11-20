@@ -18,9 +18,9 @@ int changeSpeed = 1;
 float arrow_sens_rev = 20.0f;
 float sensitivity = 1.5f;
 float speed = 0.05f;
-float min_dist = 0.1f;
+float min_dist = 0.0001f;
 
-int max_ray_length = 100;
+int max_ray_length = 200;
 float ray_process_unit = 1.0f;
 
 float maxf(float a, float b) { return (a > b) ? a : b; }
@@ -28,7 +28,7 @@ float maxf(float a, float b) { return (a > b) ? a : b; }
 camera *InitCamera() {
   camera *cam = (camera *)malloc(sizeof(camera));
 
-  cam->pos = (Vector3){1.0f, 1.0f, 1.0f};
+  cam->pos = (Vector3){5.0f, 0.0f, 0.0f};
   cam->forward = (Vector3){1.0f, 0.0f, 0.0f};
   cam->right = (Vector3){0.0f, 0.0f, 1.0f};
   cam->up = (Vector3){0.0f, 1.0f, 0.0f};
