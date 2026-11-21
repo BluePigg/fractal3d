@@ -20,7 +20,6 @@ float sensitivity = 1.5f;
 float speed = 0.05f;
 float min_dist = 0.0001f;
 
-int max_ray_length = 200;
 float ray_process_unit = 1.0f;
 
 float maxf(float a, float b) { return (a > b) ? a : b; }
@@ -68,7 +67,6 @@ int main(int argc, char *argv[]) {
   int cam_forward_loc = GetShaderLocation(shader, "cam_forward");
   int cam_right_loc = GetShaderLocation(shader, "cam_right");
   int cam_up_loc = GetShaderLocation(shader, "cam_up");
-  int max_ray_length_loc = GetShaderLocation(shader, "max_ray_length");
   int resolution_loc = GetShaderLocation(shader, "resolution");
   int mode_loc = GetShaderLocation(shader, "mode");
 
@@ -137,8 +135,6 @@ int main(int argc, char *argv[]) {
     SetShaderValue(shader, cam_forward_loc, &cam->forward, SHADER_UNIFORM_VEC3);
     SetShaderValue(shader, cam_right_loc, &cam->right, SHADER_UNIFORM_VEC3);
     SetShaderValue(shader, cam_up_loc, &cam->up, SHADER_UNIFORM_VEC3);
-    SetShaderValue(shader, max_ray_length_loc, &max_ray_length,
-                   SHADER_UNIFORM_INT);
     SetShaderValue(shader, resolution_loc, &resolution, SHADER_UNIFORM_VEC2);
     SetShaderValue(shader, mode_loc, &mode, SHADER_UNIFORM_INT);
 

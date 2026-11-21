@@ -25,7 +25,6 @@ uniform vec3 cam_forward;
 uniform vec3 cam_right;
 uniform vec3 cam_up;
 
-uniform int max_ray_length_proto;
 int max_ray_length;
 
 vec4 COLOR_HIT = vec4(0.0f,0.5f,0.5f,1.0f);
@@ -95,7 +94,6 @@ void center(Ray ray) {
 }
 
 void main() {
-  max_ray_length = max_ray_length_proto;
   vec2 coord = (gl_FragCoord.xy-0.5*resolution) / (resolution.y*0.5);
   Ray ray;
   ray.pos = cam_pos;
